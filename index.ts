@@ -1,8 +1,8 @@
-import { Template } from './workspace/template'
+import { Main } from './workspace/main'
 
 export class Index {
     public static main(): number {
-        const template = new Template();
+        const template = new Main();
         template.run();
 
         return 0;
