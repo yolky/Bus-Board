@@ -1,5 +1,6 @@
 import * as readline from "readline"
 import * as request from "request"
+import * as express from "express"
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -9,26 +10,58 @@ const rl = readline.createInterface({
 export class Main {
     public run(): void {
 
+        const app = express()
+
+        app.get('/closestStops/:postCode', (req, res) => {
+            console.log(req.params)
+            let coordinatePromise = new Promise((resolve,reject)=>{
+                // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
+                Main.coordinatesGivenPostcode(req.params['postCode'], resolve);
+            });
+            coordinatePromise.then((coordinates:Array<number>)=>{
+                Main.busStopsWithinRadius(coordinates, 500, (list)=>{
+                    let nearest2 = list.slice(0,2);
+                    // console.log(nearest2)
+                    // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
+                    Main.nextBusesGivenStopCode(nearest2[0]['id'],(listOfBuses1) => {
+                        Main.nextBusesGivenStopCode(nearest2[1]['id'],(listOfBuses2) => {                            
+                            res.send(listOfBuses1.slice(0,5).concat(listOfBuses2.slice(0,5)))
+                        });
+                    });
+                    // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
+                    
+                });
+            });
+            
+        })
+        // app.get('/', function (req, res) {
+        //     res.send('Hello World!')
+        // });
+
+        app.listen(3000, function () {
+            console.log('Example app listening on port 3000!')
+        });
+
         // let stopPromise = new Promise((resolve,reject)=>{
         //     Main.askQuestionAsync("Please enter stop code:\t", Main.nextBusesGivenStopCode,resolve);
         // });
         // stopPromise.then(Main.listFirstFive)
 
 
-        let coordinatePromise = new Promise((resolve,reject)=>{
-            // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
-            Main.coordinatesGivenPostcode('n70eu', resolve);
-        });
-        coordinatePromise.then((coordinates:Array<number>)=>{
-            Main.busStopsWithinRadius(coordinates, 500, (list)=>{
-                let nearest2 = list.slice(0,2);
-                // console.log(nearest2)
-                // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
-                Main.nextBusesGivenStopCode(nearest2[0]['id'],Main.listFirstFive);
-                // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
-                Main.nextBusesGivenStopCode(nearest2[1]['id'],Main.listFirstFive);
-            });
-        });
+        // let coordinatePromise = new Promise((resolve,reject)=>{
+        //     // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
+        //     Main.coordinatesGivenPostcode('n70eu', resolve);
+        // });
+        // coordinatePromise.then((coordinates:Array<number>)=>{
+        //     Main.busStopsWithinRadius(coordinates, 500, (list)=>{
+        //         let nearest2 = list.slice(0,2);
+        //         // console.log(nearest2)
+        //         // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
+        //         Main.nextBusesGivenStopCode(nearest2[0]['id'],Main.listFirstFive);
+        //         // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
+        //         Main.nextBusesGivenStopCode(nearest2[1]['id'],Main.listFirstFive);
+        //     });
+        // });
 
 
     }
