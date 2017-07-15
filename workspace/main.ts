@@ -12,28 +12,42 @@ export class Main {
 
         const app = express()
 
-        app.get('/closestStops/:postCode', (req, res) => {
-            console.log(req.params)
-            let coordinatePromise = new Promise((resolve,reject)=>{
-                // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
-                Main.coordinatesGivenPostcode(req.params['postCode'], resolve);
-            });
-            coordinatePromise.then((coordinates:Array<number>)=>{
-                Main.busStopsWithinRadius(coordinates, 500, (list)=>{
-                    let nearest2 = list.slice(0,2);
-                    // console.log(nearest2)
-                    // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
-                    Main.nextBusesGivenStopCode(nearest2[0]['id'],(listOfBuses1) => {
-                        Main.nextBusesGivenStopCode(nearest2[1]['id'],(listOfBuses2) => {                            
-                            res.send(listOfBuses1.slice(0,5).concat(listOfBuses2.slice(0,5)))
-                        });
-                    });
-                    // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
+        // app.get('/closestStops/:postCode', (req, res) => {
+        //     console.log(req.params)
+        //     let coordinatePromise = new Promise((resolve,reject)=>{
+        //         // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
+        //         Main.coordinatesGivenPostcode(req.params['postCode'], resolve);
+        //     });
+        //     coordinatePromise.then((coordinates:Array<number>)=>{
+        //         Main.busStopsWithinRadius(coordinates, 500, (list)=>{
+        //             let nearest2 = list.slice(0,2);
+        //             // console.log(nearest2)
+        //             // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
+        //             Main.nextBusesGivenStopCode(nearest2[0]['id'],(listOfBuses1) => {
+        //                 Main.nextBusesGivenStopCode(nearest2[1]['id'],(listOfBuses2) => {                            
+        //                     res.send(listOfBuses1.slice(0,5).concat(listOfBuses2.slice(0,5)))
+        //                 });
+        //             });
+        //             // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
                     
-                });
+        //         });
+        //     });
+
+        app.get('/closestStops', (req, res) => {
+            let postCode:string = req.query.postCode;
+            console.log(req.query)
+            Main.coordinatesGivenPostcode(postCode).then((coordinates: number[])=>{
+                return Main.busStopsWithinRadius(coordinates,500);
+            }).then((listOfStops:Object[])=>{
+                let nearest2 = listOfStops.slice(0,2);
+                return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]['id']),Main.nextBusesGivenStopCode(nearest2[1]['id'])])
+            }).then((values:Array<Array<Object>>)=>{
+                let bothBuses: Object[] = values[0].concat(values[1]);
+                res.send(bothBuses);
             });
+        });
             
-        })
+        // })
         // app.get('/', function (req, res) {
         //     res.send('Hello World!')
         // });
@@ -66,25 +80,29 @@ export class Main {
 
     }
     // callbackFunction is called with list of busstops within radius
-    public static busStopsWithinRadius(coordinates:Array<number>, radius:number, callbackFunction){
-        let listOfStops:Array<object>
-        request('https://api.tfl.gov.uk/StopPoint?stopTypes=NaptanPublicBusCoachTram&radius='+radius.toString()+'&useStopPointHierarchy=false&lat='
-        +coordinates[1]+'&lon='+ coordinates[0], function (error, response, body) {
-            listOfStops = JSON.parse(body)['stopPoints'];
-            callbackFunction(listOfStops);
+    public static busStopsWithinRadius(coordinates:Array<number>, radius:number){
+        return new Promise((resolve,reject)=>{
+            let listOfStops:Array<object>
+            request('https://api.tfl.gov.uk/StopPoint?stopTypes=NaptanPublicBusCoachTram&radius='+radius.toString()+'&useStopPointHierarchy=false&lat='
+            +coordinates[1]+'&lon='+ coordinates[0], function (error, response, body) {
+                listOfStops = JSON.parse(body)['stopPoints'];
+                resolve(listOfStops);
+            });
         });
     }
 
     // callbackFunction is called with list of next buses at given stopcode
-    public static nextBusesGivenStopCode(stopCode:string, callbackFunction):void{
-        let listOfBuses:Object[] = [];
-        request('https://api.tfl.gov.uk/StopPoint/' + stopCode + '/Arrivals', function (error, response, body) {
-            // console.log('error:', error); 
-            listOfBuses = JSON.parse(body);
-            listOfBuses.sort((a,b) => {
-                return a['timeToStation']-b['timeToStation']
-            })
-            callbackFunction(listOfBuses);
+    public static nextBusesGivenStopCode(stopCode:string){
+        return new Promise((resolve,reject)=>{
+            let listOfBuses:Object[] = [];
+            request('https://api.tfl.gov.uk/StopPoint/' + stopCode + '/Arrivals', function (error, response, body) {
+                // console.log('error:', error); 
+                listOfBuses = JSON.parse(body);
+                listOfBuses.sort((a,b) => {
+                    return a['timeToStation']-b['timeToStation']
+                })
+                resolve(listOfBuses);
+            });
         });
     }
 
@@ -101,24 +119,23 @@ export class Main {
     }
 
     // callbackFunction is called with coordinates of postcode
-    public static coordinatesGivenPostcode(postCode:string, callbackFunction){
-        request('https://api.postcodes.io/postcodes/' + postCode, function (error, response, body) {
-            // console.log('error:', error); 
-            let coordinates: number[] = [JSON.parse(body)['result']['longitude'], JSON.parse(body)['result']['latitude']];
-            //console.log(coordinates);
-            callbackFunction(coordinates);
+    public static coordinatesGivenPostcode(postCode:string,){
+        return new Promise((resolve,reject)=>{
+            request('https://api.postcodes.io/postcodes/' + postCode, function (error, response, body) {
+                // console.log('error:', error); 
+                let coordinates: number[] = [JSON.parse(body)['result']['longitude'], JSON.parse(body)['result']['latitude']];
+                //console.log(coordinates);
+                resolve(coordinates);
+            });
         });
     }
 
     // Asks a question and runs functionToCall() with the answer
-    public static askQuestionAsync(prompt:string, functionToCall, resolve){
-        let functionPromise = new Promise((resolve2,reject)=>{
+    public static askQuestionAsync(prompt:string){
+        return new Promise((resolve,reject)=>{
             rl.question(prompt, (answer)=>{
-                functionToCall(answer,resolve2);
+                resolve(answer);
             });
-        });
-        functionPromise.then((answer)=>{
-            resolve(answer)
         });
     }
 }
