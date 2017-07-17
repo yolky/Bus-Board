@@ -2,6 +2,8 @@ import * as readline from "readline"
 import * as request from "request"
 import * as express from "express"
 
+import * as cors from "cors"
+
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout
@@ -12,26 +14,9 @@ export class Main {
 
         const app = express()
 
-        // app.get('/closestStops/:postCode', (req, res) => {
-        //     console.log(req.params)
-        //     let coordinatePromise = new Promise((resolve,reject)=>{
-        //         // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
-        //         Main.coordinatesGivenPostcode(req.params['postCode'], resolve);
-        //     });
-        //     coordinatePromise.then((coordinates:Array<number>)=>{
-        //         Main.busStopsWithinRadius(coordinates, 500, (list)=>{
-        //             let nearest2 = list.slice(0,2);
-        //             // console.log(nearest2)
-        //             // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
-        //             Main.nextBusesGivenStopCode(nearest2[0]['id'],(listOfBuses1) => {
-        //                 Main.nextBusesGivenStopCode(nearest2[1]['id'],(listOfBuses2) => {                            
-        //                     res.send(listOfBuses1.slice(0,5).concat(listOfBuses2.slice(0,5)))
-        //                 });
-        //             });
-        //             // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
-                    
-        //         });
-        //     });
+        
+
+        app.use(cors());
 
         app.get('/closestStops', (req, res) => {
             console.log(req.url)
@@ -43,43 +28,17 @@ export class Main {
                 let nearest2 = listOfStops.slice(0,2);
                 return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]['id']),Main.nextBusesGivenStopCode(nearest2[1]['id'])])
             }).then((values:Array<Array<Object>>)=>{
-                let bothBuses: Object[] = values[0].slice(0,5).concat(values[1].slice(0,5));
-                res.send(JSON.stringify(bothBuses));
+                let bothBuses: Object[] = [values[0].slice(0,5),values[1].slice(0,5)];
+                res.send(bothBuses);
             }).catch((err:Error)=>{
                 console.log(err)
                 res.status(400).send(err.message);
             });
         });
-            
-        // })
-        // app.get('/', function (req, res) {
-        //     res.send('Hello World!')
-        // });
-
+        
         app.listen(3000, function () {
             console.log('Example app listening on port 3000!')
         });
-
-        // let stopPromise = new Promise((resolve,reject)=>{
-        //     Main.askQuestionAsync("Please enter stop code:\t", Main.nextBusesGivenStopCode,resolve);
-        // });
-        // stopPromise.then(Main.listFirstFive)
-
-
-        // let coordinatePromise = new Promise((resolve,reject)=>{
-        //     // Main.askQuestionAsync("Enter postcode:\t", Main.coordinatesGivenPostcode,resolve);
-        //     Main.coordinatesGivenPostcode('n70eu', resolve);
-        // });
-        // coordinatePromise.then((coordinates:Array<number>)=>{
-        //     Main.busStopsWithinRadius(coordinates, 500, (list)=>{
-        //         let nearest2 = list.slice(0,2);
-        //         // console.log(nearest2)
-        //         // console.log("Next buses arriving at ",nearest2[0]['commonName'] , " :");
-        //         Main.nextBusesGivenStopCode(nearest2[0]['id'],Main.listFirstFive);
-        //         // console.log("Next buses arriving at ",nearest2[1]['commonName'] , " :");
-        //         Main.nextBusesGivenStopCode(nearest2[1]['id'],Main.listFirstFive);
-        //     });
-        // });
 
 
     }
