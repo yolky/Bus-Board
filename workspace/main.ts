@@ -44,7 +44,7 @@ export class Main {
                 return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]['id']),Main.nextBusesGivenStopCode(nearest2[1]['id'])])
             }).then((values:Array<Array<Object>>)=>{
                 let bothBuses: Object[] = values[0].slice(0,5).concat(values[1].slice(0,5));
-                res.send(bothBuses);
+                res.send(JSON.stringify(bothBuses));
             }).catch((err:Error)=>{
                 console.log(err)
                 res.status(400).send(err.message);

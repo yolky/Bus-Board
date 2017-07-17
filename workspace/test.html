@@ -4,20 +4,20 @@
     <meta charset="utf-8">
     <title>title</title>
     <link rel="stylesheet" href="style.css">
-    <script src="./script.js"></script>
+    
   </head>
   <body>
     <p id="dynamicText">test</p>
     <script>
-        var xhttp = new XMLHttpRequest();
-        document.write(5+1)
-        xhttp.open("GET", "http://localhost:3000/closestStops?postCode=nw51tl", false);
-        xhttp.setRequestHeader("Content-type", "application/text");
         
+        //var XMLHttpRequest = require('xmlhttprequest')
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("GET", "http://localhost:3000/closestStops?postCode=nw51tl", false);
+        //xhttp.setRequestHeader("Content-type", "application/json");
+        document.write('wer')
         xhttp.send();
-        document.write(5+1)
+        document.write('wer')
         var response = JSON.parse(xhttp.responseText);
-        document.getElementById('dynamicText').innerHTML = "akl;sdjs";
     </script>
   </body>
 </html>
