@@ -1,6 +1,6 @@
 window.onload = getStopData;
 
-setInterval(getStopData, 30000);
+// setInterval(getStopData, 30000);
 
 var xhttp = new XMLHttpRequest();
 

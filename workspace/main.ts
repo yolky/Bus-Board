@@ -23,12 +23,12 @@ export class Main {
             let postCode:string = req.query.postCode;
             console.log(req.query)
             Main.coordinatesGivenPostcode(postCode).then((coordinates: number[])=>{
-                return Main.busStopsWithinRadius(coordinates,500);
-            }).then((listOfStops:Object[])=>{
+                return Main.findNearest2BusStops(coordinates);
+            }).then((listOfStops:Array<object>)=>{
                 let nearest2 = listOfStops.slice(0,2);
                 return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]['id']),Main.nextBusesGivenStopCode(nearest2[1]['id'])])
             }).then((values:Array<Array<Object>>)=>{
-                let bothBuses: Object[] = [values[0].slice(0,5),values[1].slice(0,5)];
+                let bothBuses: Array<object> = [values[0].slice(0,5),values[1].slice(0,5)];
                 res.send(bothBuses);
             }).catch((err:Error)=>{
                 console.log(err)
@@ -43,18 +43,51 @@ export class Main {
 
     }
     // callbackFunction is called with list of busstops within radius
-    public static busStopsWithinRadius(coordinates:Array<number>, radius:number){
+    public static busStopsWithinRadius(coordinates:Array<number>, radius:number):Promise<object[]>{
         return new Promise((resolve,reject)=>{
             let listOfStops:Array<object>
             request('https://api.tfl.gov.uk/StopPoint?stopTypes=NaptanPublicBusCoachTram&radius='+radius.toString()+'&useStopPointHierarchy=false&lat='
             +coordinates[1]+'&lon='+ coordinates[0], function (error, response, body) {
                 listOfStops = JSON.parse(body)['stopPoints'];
-                if(listOfStops.length == 0){
-                    reject(new Error('Error 400: No bus stops nearby'));
-                }
                 resolve(listOfStops);
             });
         });
+    }
+
+
+
+    public static findNearest2BusStops(coordinates: Array<number>, distance:number = 100):Promise<object[]> {
+        return Main.busStopsWithinRadius(coordinates, distance).then((listOfStops:Array<object>) => {
+            if (!listOfStops){
+                return Main.findNearest2BusStops(coordinates, distance+100)
+            }
+            else if (listOfStops.length<2){
+                return Main.findNearest2BusStops(coordinates, distance + 100)
+            }
+            else{
+                return new Promise((resolve, reject) => {
+                    resolve(listOfStops)
+                })
+            }
+        })
+        
+        // console.log(distance);
+        // return new Promise((resolve, reject) => {
+        //     Main.busStopsWithinRadius(coordinates, distance).then((listOfStops:Array<object>) => {
+        //         if(!listOfStops){
+        //             return Main.findNearest2BusStops(coordinates,distance+100);
+        //         }
+        //         else if (listOfStops.length<2){
+        //             console.log(listOfStops.length)
+        //             return Main.findNearest2BusStops(coordinates,distance+100);
+        //         }
+        //         else{
+        //             console.log(listOfStops.length)
+        //             console.log("test")
+        //             resolve(listOfStops)
+        //         }
+        //     })
+        // });
     }
 
     // callbackFunction is called with list of next buses at given stopcode
