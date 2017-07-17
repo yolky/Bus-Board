@@ -34,6 +34,7 @@ export class Main {
         //     });
 
         app.get('/closestStops', (req, res) => {
+            console.log(req.url)
             let postCode:string = req.query.postCode;
             console.log(req.query)
             Main.coordinatesGivenPostcode(postCode).then((coordinates: number[])=>{
@@ -42,8 +43,11 @@ export class Main {
                 let nearest2 = listOfStops.slice(0,2);
                 return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]['id']),Main.nextBusesGivenStopCode(nearest2[1]['id'])])
             }).then((values:Array<Array<Object>>)=>{
-                let bothBuses: Object[] = values[0].concat(values[1]);
+                let bothBuses: Object[] = values[0].slice(0,5).concat(values[1].slice(0,5));
                 res.send(bothBuses);
+            }).catch((err:Error)=>{
+                console.log(err)
+                res.status(400).send(err.message);
             });
         });
             
@@ -86,6 +90,9 @@ export class Main {
             request('https://api.tfl.gov.uk/StopPoint?stopTypes=NaptanPublicBusCoachTram&radius='+radius.toString()+'&useStopPointHierarchy=false&lat='
             +coordinates[1]+'&lon='+ coordinates[0], function (error, response, body) {
                 listOfStops = JSON.parse(body)['stopPoints'];
+                if(listOfStops.length == 0){
+                    reject(new Error('Error 400: No bus stops nearby'));
+                }
                 resolve(listOfStops);
             });
         });
@@ -122,10 +129,13 @@ export class Main {
     public static coordinatesGivenPostcode(postCode:string,){
         return new Promise((resolve,reject)=>{
             request('https://api.postcodes.io/postcodes/' + postCode, function (error, response, body) {
-                // console.log('error:', error); 
-                let coordinates: number[] = [JSON.parse(body)['result']['longitude'], JSON.parse(body)['result']['latitude']];
-                //console.log(coordinates);
-                resolve(coordinates);
+                try{
+                    let coordinates: number[] = [JSON.parse(body)['result']['longitude'], JSON.parse(body)['result']['latitude']];
+                    resolve(coordinates);
+                }catch(err){
+                    reject(new Error('Error 400: Invalid postcode'));
+                }
+                
             });
         });
     }
