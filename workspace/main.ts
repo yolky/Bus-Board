@@ -1,6 +1,9 @@
 import * as readline from "readline"
 import * as request from "request"
 import * as express from "express"
+import {BusStop} from "./busStop"
+import {IncomingBus} from "./incomingBus"
+
 
 import * as cors from "cors"
 
@@ -24,11 +27,11 @@ export class Main {
             console.log(req.query)
             Main.coordinatesGivenPostcode(postCode).then((coordinates: number[])=>{
                 return Main.findNearest2BusStops(coordinates);
-            }).then((listOfStops:Array<object>)=>{
-                let nearest2 = listOfStops.slice(0,2);
-                return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]['id']),Main.nextBusesGivenStopCode(nearest2[1]['id'])])
-            }).then((values:Array<Array<Object>>)=>{
-                let bothBuses: Array<object> = [values[0].slice(0,5),values[1].slice(0,5)];
+            }).then((listOfStops:Array<BusStop>)=>{
+                let nearest2 = listOfStops.slice(0,2);              
+                return Promise.all([Main.nextBusesGivenStopCode(nearest2[0]),Main.nextBusesGivenStopCode(nearest2[1])])
+            }).then((values:Array<Array<IncomingBus>>)=>{
+                let bothBuses: Array<Array<IncomingBus>> = [values[0].slice(0,5),values[1].slice(0,5)];
                 res.send(bothBuses);
             }).catch((err:Error)=>{
                 console.log(err)
@@ -42,65 +45,63 @@ export class Main {
 
 
     }
-    // callbackFunction is called with list of busstops within radius
-    public static busStopsWithinRadius(coordinates:Array<number>, radius:number):Promise<object[]>{
+    // Returns a promise resolving with a list of BusStop objects representing busstops within given radius of coordinates[]
+    public static busStopsWithinRadius(coordinates:Array<number>, radius:number):Promise<BusStop[]>{
         return new Promise((resolve,reject)=>{
             let listOfStops:Array<object>
             request('https://api.tfl.gov.uk/StopPoint?stopTypes=NaptanPublicBusCoachTram&radius='+radius.toString()+'&useStopPointHierarchy=false&lat='
             +coordinates[1]+'&lon='+ coordinates[0], function (error, response, body) {
                 listOfStops = JSON.parse(body)['stopPoints'];
-                resolve(listOfStops);
+                if(!listOfStops){
+                    resolve([]);
+                }
+                else{
+                    let ans:Array<BusStop> = []
+                    for (let i:number = 0; i<listOfStops.length; i++){
+                        ans.push(new BusStop(listOfStops[i]))
+                    }
+                    resolve(ans)
+                }
             });
         });
     }
 
 
 
-    public static findNearest2BusStops(coordinates: Array<number>, distance:number = 100):Promise<object[]> {
+    public static findNearest2BusStops(coordinates: Array<number>, distance:number = 200):Promise<BusStop[]> {
         return Main.busStopsWithinRadius(coordinates, distance).then((listOfStops:Array<object>) => {
             if (!listOfStops){
-                return Main.findNearest2BusStops(coordinates, distance+100)
+                // console.log(distance);
+                return Main.findNearest2BusStops(coordinates, Math.floor(distance*1.2));
             }
             else if (listOfStops.length<2){
-                return Main.findNearest2BusStops(coordinates, distance + 100)
+                // console.log(distance);
+                return Main.findNearest2BusStops(coordinates, Math.floor(distance*1.2));
             }
             else{
                 return new Promise((resolve, reject) => {
-                    resolve(listOfStops)
+                    resolve(listOfStops);
                 })
             }
         })
-        
-        // console.log(distance);
-        // return new Promise((resolve, reject) => {
-        //     Main.busStopsWithinRadius(coordinates, distance).then((listOfStops:Array<object>) => {
-        //         if(!listOfStops){
-        //             return Main.findNearest2BusStops(coordinates,distance+100);
-        //         }
-        //         else if (listOfStops.length<2){
-        //             console.log(listOfStops.length)
-        //             return Main.findNearest2BusStops(coordinates,distance+100);
-        //         }
-        //         else{
-        //             console.log(listOfStops.length)
-        //             console.log("test")
-        //             resolve(listOfStops)
-        //         }
-        //     })
-        // });
     }
 
     // callbackFunction is called with list of next buses at given stopcode
-    public static nextBusesGivenStopCode(stopCode:string){
+    public static nextBusesGivenStopCode(busStop:BusStop):Promise<Array<IncomingBus>>{
+        let stopCode:string = busStop.id
         return new Promise((resolve,reject)=>{
-            let listOfBuses:Object[] = [];
+            let listOfBuses:IncomingBus[] = [];
             request('https://api.tfl.gov.uk/StopPoint/' + stopCode + '/Arrivals', function (error, response, body) {
                 // console.log('error:', error); 
                 listOfBuses = JSON.parse(body);
                 listOfBuses.sort((a,b) => {
                     return a['timeToStation']-b['timeToStation']
                 })
-                resolve(listOfBuses);
+                let ans:Array<IncomingBus> = []
+                for (let i:number = 0; i<listOfBuses.length; i++){
+                    ans.push(new IncomingBus(listOfBuses[i]));
+                }
+                resolve(ans);
             });
         });
     }
