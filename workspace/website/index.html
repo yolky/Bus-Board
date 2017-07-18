@@ -11,8 +11,8 @@
     
 
     <form id="postCodeForm">
-      Post Code: <input type="text" name="fpostcode" value="nw51tl"><br>
-      <input id='theButton' type="button" onclick="getStopData()" value="Submit">
+      Post Code: <input id='inputText' type="text" onkeypress="onKeyPress(event)" name="fpostcode" value="nw51tl"><br>
+      <input id='theButton' type="button" onclick="getStopData()" value="">
     </form>
 
     <h1 id= 'title0'>Station 1</h1>
@@ -20,7 +20,7 @@
       <tr>
         <th>Destination Name</th>
         <th>Line Name</th>
-        <th>Arrival Time (GMT)</th>
+        <th>Arrival Time</th>
       </tr>
       <tr>
         <td>--</td>
@@ -54,7 +54,7 @@
       <tr>
         <th>Destination Name</th>
         <th>Line Name</th>
-        <th>Arrival Time (GMT)</th>
+        <th>Arrival Time</th>
       </tr>
       <tr>
         <td>--</td>

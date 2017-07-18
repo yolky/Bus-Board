@@ -1,5 +1,5 @@
 body{
-    background-image: url("https://68.media.tumblr.com/bc04a870cb42a592e44d9bcbe32e8428/tumblr_nuhcd2rUhW1u0zuyso1_500.gif");
+    background-image: url("./bus.gif");
     background-repeat: repeat-x-y;
 }
 
@@ -15,6 +15,25 @@ h1 {
    background-color: rgba(255, 0, 0, 0.6);
    letter-spacing: 35px;
 }
+
+#inputText{
+    height: 40px;
+    width: 1000px;
+    text-align: center;
+    animation-duration: 5000ms;
+   animation-name: textboxAnim;
+   animation-iteration-count: infinite;
+   animation-direction: alternate;
+}
+
+@keyframes textboxAnim {
+   from {
+       width:400px;
+   }
+   to {
+       width:1200px;
+   }
+ }
 
 input#theButton {
     background:url("./button.jpg");
@@ -62,6 +81,7 @@ form {
 
  td {
     background-color: rgba(255, 255, 255, 0.6);
+    text-align: center;
  }
 
 @keyframes tableAnim {
