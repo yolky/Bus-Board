@@ -1,8 +1,8 @@
 
 
 export class BusStop{
-    public id:string
-    constructor(jsonObj:object){
-        this.id = jsonObj['id']
+    constructor(public id: string, public stationName: string){
+        this.id = id;
+        this.stationName = stationName
     }
 }

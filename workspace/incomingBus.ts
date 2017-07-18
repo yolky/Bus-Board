@@ -5,11 +5,12 @@ export class IncomingBus{
     destinationName:string
     lineName:string
     expectedArrival:string
-    constructor(incomingBusesObj:object){
-        this.stationName = incomingBusesObj['stationName'];
-        this.destinationName = incomingBusesObj['destinationName']; 
-        this.lineName = incomingBusesObj['lineName']; 
-        this.expectedArrival = incomingBusesObj['expectedArrival'].split("T")[1]; 
+    constructor(stationName: string, destinationName: string, lineName: string,
+        expectedArrival: string){
+        this.stationName = stationName;
+        this.destinationName = destinationName; 
+        this.lineName = lineName; 
+        this.expectedArrival = expectedArrival.split("T")[1]; 
         this.expectedArrival = this.expectedArrival.slice(0,this.expectedArrival.length - 1);
     }
 }
