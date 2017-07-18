@@ -1,5 +1,3 @@
-
-
 export class IncomingBus{
     stationName:string
     destinationName:string

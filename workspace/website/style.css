@@ -16,6 +16,16 @@ h1 {
    letter-spacing: 35px;
 }
 
+.wrapper {
+    text-align: center;
+}
+
+button{
+    background: url('./sorry.gif');
+    width: 530px;
+    height: 300px;
+}
+
 #inputText{
     height: 40px;
     width: 1000px;

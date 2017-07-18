@@ -9,7 +9,6 @@ var xhttp = new XMLHttpRequest();
 function getStopData(){
     var postCode = document.getElementById('postCodeForm').elements[0].value;
     xhttp.open("GET", "http://localhost:3000/closestStops?postCode="+postCode, false);
-
     xhttp.send();
 
     
@@ -18,8 +17,8 @@ function getStopData(){
         showResults(response)
     }
     else if(xhttp.status==400 || xhttp.status== 404){
-        window.alert("Please enter valid London postcode");
-        showResults([{busStop:"--",incomingBuses: []},{busStop: "--",incomingBuses:[]}])
+        localStorage.setItem("error message", xhttp.responseText);
+        window.location.href = './error.html';
     }    
 }
 
@@ -62,10 +61,4 @@ function changeColor() {
     document.getElementById("postCodeForm").style.color = `rgb(${red},${green},${blue})`
     var fontSize = (Math.floor(15+(Math.random()*30))).toString()+"px";
     document.getElementById("postCodeForm").style.fontSize = fontSize;
-}
-
-function onKeyPress(event) {
-    if (event.keyCode == 13) {
-        getStopData();
-    }
 }
