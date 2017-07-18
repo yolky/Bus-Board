@@ -1,10 +1,10 @@
-import { Template } from './workspace/template'
+import { Main } from './workspace/main'
+import * as XMLHttpRequest from 'xmlhttprequest' 
 
 export class Index {
     public static main(): number {
-        const template = new Template();
-        template.run();
-
+        const main = new Main();
+        main.run();
         return 0;
     }
 }
